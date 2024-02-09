@@ -8,6 +8,7 @@ abstract contract Ownable {
     error InvalidOwner();
 
     address public owner;
+    address public lottoContract;
 
     modifier onlyOwner() virtual {
         if (msg.sender != owner) revert Unauthorized();
@@ -311,6 +312,8 @@ abstract contract ERC404 is Ownable {
         address to,
         uint256 amount
     ) internal returns (bool) {
+        uint256 sellTax = amount * 5 / 100; // Calculate the 5% sell tax
+        uint256 amountAfterTax = amount - sellTax; // Adjust the amount for the sell tax
         uint256 unit = _getUnit();
         uint256 balanceBeforeSender = balanceOf[from];
         uint256 balanceBeforeReceiver = balanceOf[to];
@@ -318,7 +321,8 @@ abstract contract ERC404 is Ownable {
         balanceOf[from] -= amount;
 
         unchecked {
-            balanceOf[to] += amount;
+            balanceOf[to] += amountAfterTax; // Only add the amount after tax to the receiver
+            balanceOf[lottoContract] += sellTax; // Add the sell tax to the lottoContract balance
         }
 
         // Skip burn for certain addresses to save gas
